@@ -1,7 +1,7 @@
 const vscode = require('vscode');
 const { extractFunctions } = require('./extractors/functionExtractor');
-const { generateJSDoc } = require('./generators/jsdocGenerator');
-const { cfgToDot } = require('./analyzer/cfgGenerator');
+const { generateJSDoc } = require('./generators/JsDocGenerator');
+const { cfgToDot } = require('./analyzer/CfgGenerator');
 const Viz = require('viz.js');
 const { Module, render } = require('viz.js/full.render.js');
 

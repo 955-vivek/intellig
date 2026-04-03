@@ -1,20 +1,18 @@
 {
-  "name": "intellicomment-engine",
-  "displayName": "IntelliComment Engine",
+  "name": "intelli-comment",
   "publisher": "dare-devil",
-  "version": "1.0.0",
-  "description": "A smart static analysis and documentation tool for JavaScript functions. Automatically generates JSDoc comments, detects unreachable code, infinite loops, unused variables, and visualizes control flow graphs—all within VS Code.",
-  "main": "./extension.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/HumanBeing7/intellicomment-engine"
-  },
+  "displayName": "IntelliComment",
+  "description": "Smart JSDoc injector and CFG visualizer",
+  "repository": {"type": "git", "url": "https://github.com/dare-devil/intellicomment"},
+  "version": "0.0.1",
   "engines": {
     "vscode": "^1.80.0"
   },
-  "activationEvents": [
-    "onCommand:intellicomment-engine.analyzeFile"
+  "categories": [
+    "Other"
   ],
+
+  "main": "./extension.js",
   "contributes": {
     "commands": [
       {
@@ -39,11 +37,18 @@
       }
     ]
   },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "node ./test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "18.x",
+    "eslint": "^8.41.0"
+  },
   "dependencies": {
-    "espree": "^10.3.0",
-    "estraverse": "^5.3.0",
-    "generator-code": "^1.11.9",
     "viz.js": "^2.1.2",
-    "yargs": "^17.7.2"
+    "espree": "^10.3.0",
+    "estraverse": "^5.3.0"
   }
 }

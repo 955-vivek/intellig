@@ -1,10 +1,10 @@
-import { parseCode } from '../parser/parser.js'; // Import the parser module
-import { analyzeFunctionBody } from '../analyzer/staticAnalyzer.js';
-import { inferParamType, inferReturnType } from '../utils/typeInference.js';
-import { generateCFG, findUnreachableNodes, detectInfiniteLoops, findUnusedVariablesCFG } from '../analyzer/cfgGenerator.js';
+const { parseCode } = require('../parser/parser.js');
+const { analyzeFunctionBody } = require('../analyzer/StaticAnalyser.js');
+const { inferParamType, inferReturnType } = require('../utils/TypeInterface.js');
+const { generateCFG, findUnreachableNodes, detectInfiniteLoops, findUnusedVariablesCFG } = require('../analyzer/CfgGenerator.js');
 
 
-export function extractFunctions(fileContent) {
+function extractFunctions(fileContent) {
     const ast = parseCode(fileContent); // Parse the file content into an AST
     const functions = [];
 
@@ -22,6 +22,8 @@ export function extractFunctions(fileContent) {
 
     return functions;
 }
+
+module.exports = { extractFunctions };
 
 function extractFunctionMeta(node) {
     const name = node.id ? node.id.name : 'anonymous';

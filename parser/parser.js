@@ -1,5 +1,5 @@
 // filepath: c:\Users\arvin\OneDrive\Desktop\CommentGenerator\comment-engine\parser\parser.js
-import * as espree from 'espree';
+const espree = require('espree');
 
 /**
  * Parses JavaScript code and returns the Abstract Syntax Tree (AST).
@@ -7,7 +7,7 @@ import * as espree from 'espree';
  * @param {string} code - The JavaScript code to parse.
  * @returns {Object} - The parsed AST.
  */
-export function parseCode(code) {
+function parseCode(code) {
     try {
         return espree.parse(code, {
             ecmaVersion: 'latest',
@@ -20,7 +20,7 @@ export function parseCode(code) {
         throw error; // Rethrow the error for handling in the caller
     }
 }
-export function tokenizeCode(code) {
+function tokenizeCode(code) {
     // Return only the tokens array
     const ast = espree.parse(code, {
         ecmaVersion: 'latest',
@@ -30,7 +30,7 @@ export function tokenizeCode(code) {
     return ast.tokens;
 }
 
-export function getParseTree(code) {
+function getParseTree(code) {
     // Return the full AST for demonstration
     return espree.parse(code, {
         ecmaVersion: 'latest',
@@ -40,3 +40,5 @@ export function getParseTree(code) {
         tokens: true
     });
 }
+
+module.exports = { parseCode, tokenizeCode, getParseTree };
