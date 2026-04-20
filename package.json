@@ -1,6 +1,6 @@
 {
   "name": "intelli-comment",
-  "publisher": "Four bit Crew",
+  "publisher": "Four-Bit-Crew",
   "displayName": "IntelliComment",
   "description": "Smart JSDoc injector and CFG visualizer",
   "repository": {"type": "git", "url": "https://github.com/955-vivek/intellig"},
@@ -12,6 +12,10 @@
     "Other"
   ],
 
+  "activationEvents": [
+    "onCommand:intellicomment-engine.analyzeFile",
+    "onCommand:intellicomment-engine.showCFG"
+  ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
