@@ -117,7 +117,7 @@ function activate(context) {
             return;
         }
 
-        for (const func of targetFunctions) {
+        for (const func of targetFunctions) {                                                                                                                                                       
             // Generate DOT for the selected function's CFG
             const dot = cfgToDot(func.cfg, func.name);
 
@@ -138,10 +138,43 @@ function activate(context) {
                 { enableScripts: true }
             );
             panel.webview.html = `
-        <html>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {
+                    font-family: var(--vscode-font-family, 'Segoe UI', Arial, sans-serif);
+                    background-color: var(--vscode-editor-background);
+                    color: var(--vscode-editor-foreground);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    padding: 20px;
+                }
+                .svg-container {
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    padding: 20px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    margin-top: 20px;
+                    max-width: 100%;
+                    overflow: auto;
+                }
+                h2 {
+                    margin-bottom: 0px;
+                    color: var(--vscode-editor-foreground);
+                }
+                svg {
+                    max-width: 100%;
+                    height: auto;
+                }
+            </style>
+        </head>
         <body>
             <h2>Control Flow Graph: ${func.name}</h2>
-            <div>${svg}</div>
+            <div class="svg-container">${svg}</div>
         </body>
         </html>
     `;

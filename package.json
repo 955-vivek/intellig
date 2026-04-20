@@ -1,9 +1,9 @@
 {
   "name": "intelli-comment",
-  "publisher": "dare-devil",
+  "publisher": "Four bit Crew",
   "displayName": "IntelliComment",
   "description": "Smart JSDoc injector and CFG visualizer",
-  "repository": {"type": "git", "url": "https://github.com/dare-devil/intellicomment"},
+  "repository": {"type": "git", "url": "https://github.com/955-vivek/intellig"},
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.80.0"
@@ -27,7 +27,7 @@
     "keybindings": [
       {
         "command": "intellicomment-engine.analyzeFile",
-        "key": "ctrl+alt+j",
+        "key": "ctrl+alt+d",
         "when": "editorTextFocus && editorLangId == javascript"
       },
       {

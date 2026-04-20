@@ -1,4 +1,3 @@
-// filepath: c:\Users\arvin\OneDrive\Desktop\CommentGenerator\comment-engine\parser\parser.js
 const espree = require('espree');
 
 /**

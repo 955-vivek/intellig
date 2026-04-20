@@ -1,104 +1,116 @@
-export function analyzeFunctionBody(body) {
-    if (!body || !Array.isArray(body.body)) return [];
+const { generateCodeFromNode } = require('./CfgGenerator.js');
+
+function analyzeFunctionBody(body, functionName) {
+    if (!body || !Array.isArray(body.body)) return { tags: [], recursion: null };
 
     const patterns = new Set();
+    let recursionInfo = null;
 
-    function traverseNodes(nodes) {
+    function checkCallRecursive(n) {
+        if (!n) return null;
+        if (n.type === 'CallExpression' && n.callee.name === functionName) return n;
+        for (let k in n) {
+            if (n[k] && typeof n[k] === 'object') {
+                const res = checkCallRecursive(n[k]);
+                if (res) return res;
+            }
+        }
+        return null;
+    }
+
+    function traverseNodes(nodes, currentCondition = null) {
         for (const node of nodes) {
             switch (node.type) {
-                // Iteration Patterns
                 case 'ForStatement':
                 case 'WhileStatement':
                 case 'DoWhileStatement':
-                    patterns.add('performs iteration');
-                    if (node.body && node.body.body) {
-                        traverseNodes(node.body.body); // Traverse loop body
+                    patterns.add('iteration loops');
+                    if (node.body) {
+                        traverseNodes(node.body.type === 'BlockStatement' ? node.body.body : [node.body]);
                     }
                     break;
 
-                // Conditional Logic
                 case 'IfStatement':
-                case 'SwitchStatement':
-                    patterns.add('uses conditional logic');
-                    if (node.consequent && node.consequent.body) {
-                        traverseNodes(node.consequent.body); // Traverse if block
+                    patterns.add('conditional logic');
+                    const conditionCode = generateCodeFromNode(node.test);
+                    if (node.consequent) {
+                        traverseNodes(node.consequent.type === 'BlockStatement' ? node.consequent.body : [node.consequent], conditionCode);
                     }
                     if (node.alternate) {
-                        traverseNodes(node.alternate.body || [node.alternate]); // Handle else block or single statement
+                        traverseNodes(node.alternate.type === 'BlockStatement' ? node.alternate.body : [node.alternate]);
                     }
                     break;
 
-                // Variable Declaration (Detect HTTP Requests)
+                case 'SwitchStatement':
+                    patterns.add('conditional logic');
+                    break;
+
                 case 'VariableDeclaration':
                     for (const declaration of node.declarations) {
                         if (declaration.init) {
-                            if (declaration.init.type === 'AwaitExpression' && declaration.init.argument.type === 'CallExpression') {
-                                const callee = declaration.init.argument.callee;
-                                if (callee.type === 'Identifier' && callee.name === 'fetch') {
-                                    patterns.add('performs HTTP requests');
-                                }
-                            } else if (declaration.init.type === 'CallExpression') {
-                                const callee = declaration.init.callee;
-                                if (callee.type === 'Identifier' && callee.name === 'fetch') {
-                                    patterns.add('performs HTTP requests');
-                                }
+                            if (checkCallRecursive(declaration.init)) {
+                                if (!recursionInfo) recursionInfo = { isRecursive: true, baseConditions: [] };
+                            }
+                            if (declaration.init.type === 'CallExpression' && declaration.init.callee.name === 'fetch') {
+                                patterns.add('HTTP requests');
                             }
                         }
                     }
                     break;
 
-                // Return Statement
                 case 'ReturnStatement':
                     if (node.argument) {
+                        const recursiveCallNode = checkCallRecursive(node.argument);
 
-                        if (node.argument.type === 'BinaryExpression') {
-                            patterns.add('performs mathematical operations');
-                        } else if (node.argument.type === 'CallExpression') {
-                            const callee = node.argument.callee;
-
-                            if (callee && callee.type === 'MemberExpression') {
-                                const objectName = callee.object.name; // Get the object name (e.g., 'array', 'string')
-                                const methodName = callee.property.name; // Get the method name (e.g., 'map', 'split')
-
-                                if (['map', 'filter', 'reduce'].includes(methodName)) {
-                                    patterns.add('manipulates arrays');
-                                } else if (['split', 'join', 'toUpperCase', 'toLowerCase'].includes(methodName)) {
-                                    patterns.add('manipulates strings');
-                                }
-                            } else if (callee && callee.type === 'Identifier') {
-                                // Handle standalone function calls like fetch()
-                                if (callee.name === 'fetch') {
-                                    patterns.add('performs HTTP requests');
-                                }
+                        if (recursiveCallNode) {
+                            if (!recursionInfo) recursionInfo = { isRecursive: true, baseConditions: [] };
+                            recursionInfo.isRecursive = true;
+                            
+                            const argString = recursiveCallNode.arguments[0] ? generateCodeFromNode(recursiveCallNode.arguments[0]) : '';
+                            let action = "processes";
+                            if (node.argument.type === 'BinaryExpression') {
+                                if (node.argument.operator === '*') action = "multiplies";
+                                else if (node.argument.operator === '+') action = "adds";
+                                else if (node.argument.operator === '-') action = "subtracts";
+                                else if (node.argument.operator === '/') action = "divides";
                             }
+                            
+                            recursionInfo.recursiveStep = `recursively calls itself with (${argString}) and ${action} the result`;
+
+                        } else if (currentCondition) {
+                            // If returning without recursion while inside a condition, we trace it as a base condition output
+                            if (!recursionInfo) recursionInfo = { isRecursive: false, baseConditions: [] };
+                            recursionInfo.baseConditions.push(currentCondition);
                         }
+
+                        if (node.argument.type === 'CallExpression' && node.argument.callee.type === 'MemberExpression') {
+                            const methodName = node.argument.callee.property.name;
+                            if (['map', 'filter', 'reduce'].includes(methodName)) patterns.add('array manipulation');
+                            if (['split', 'join', 'toUpperCase', 'toLowerCase'].includes(methodName)) patterns.add('string manipulation');
+                        }
+                    } else if (currentCondition) {
+                        if (!recursionInfo) recursionInfo = { isRecursive: false, baseConditions: [] };
+                        recursionInfo.baseConditions.push(currentCondition);
                     }
                     break;
 
-                // Expression Statement (Detect Logging)
                 case 'ExpressionStatement':
                     if (node.expression.type === 'CallExpression') {
+                        if (checkCallRecursive(node.expression)) {
+                             if (!recursionInfo) recursionInfo = { isRecursive: true, baseConditions: [] };
+                             recursionInfo.isRecursive = true;
+                        }
                         const callee = node.expression.callee;
-
-                        if (callee && callee.type === 'MemberExpression') {
-                            const objectName = callee.object.name; // Get the object name (e.g., 'console')
-                            const methodName = callee.property.name; // Get the method name (e.g., 'log')
-
-                            if (objectName === 'console' && methodName === 'log') {
-                                patterns.add('logs output');
-                            }
+                        if (callee && callee.type === 'MemberExpression' && callee.object.name === 'console') {
+                            patterns.add('console logging');
                         }
                     }
                     break;
 
-                // Nested Blocks
                 case 'BlockStatement':
                     if (Array.isArray(node.body)) {
-                        traverseNodes(node.body); // Traverse nested blocks
+                        traverseNodes(node.body, currentCondition);
                     }
-                    break;
-
-                default:
                     break;
             }
         }
@@ -106,5 +118,14 @@ export function analyzeFunctionBody(body) {
 
     traverseNodes(body.body);
 
-    return Array.from(patterns); // Convert Set back to an array
+    if (recursionInfo && !recursionInfo.isRecursive) {
+        recursionInfo = null;
+    }
+
+    return { 
+        tags: Array.from(patterns),
+        recursion: recursionInfo
+    };
 }
+
+module.exports = { analyzeFunctionBody };

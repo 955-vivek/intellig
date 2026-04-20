@@ -41,7 +41,7 @@ function extractFunctionMeta(node) {
         description: ''
     };
 
-    const patterns = analyzeFunctionBody(node.body); // Analyze function body for patterns
+    const patterns = analyzeFunctionBody(node.body, name);
 
     // Generate CFG for this function
     const cfg = generateCFG(node);
