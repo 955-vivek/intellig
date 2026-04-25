@@ -11,11 +11,6 @@
   "categories": [
     "Other"
   ],
-
-  "activationEvents": [
-    "onCommand:intellicomment-engine.analyzeFile",
-    "onCommand:intellicomment-engine.showCFG"
-  ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
