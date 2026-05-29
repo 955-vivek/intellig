@@ -1,7 +1,7 @@
 const { parseCode } = require('../parser/parser.js');
 const { analyzeFunctionBody } = require('../analyzer/StaticAnalyser.js');
 const { inferParamType, inferReturnType } = require('../utils/TypeInterface.js');
-const { generateCFG, findUnreachableNodes, detectInfiniteLoops, findUnusedVariablesCFG } = require('../analyzer/CfgGenerator.js');
+const { generateCFG, findUnreachableNodes, detectInfiniteLoops, findUnusedVariablesCFG, findUndeclaredVariables } = require('../analyzer/CfgGenerator.js');
 
 
 function extractFunctions(fileContent) {
@@ -50,6 +50,7 @@ function extractFunctionMeta(node) {
     const unreachableNodes = findUnreachableNodes(cfg);
     const hasInfiniteLoop = detectInfiniteLoops(cfg);
     const unusedVariables = findUnusedVariablesCFG(node, cfg);
+    const undeclaredVariables = findUndeclaredVariables(node);
 
-    return { name, params, returns, body: node.body, patterns, cfg, unreachableNodes, hasInfiniteLoop, unusedVariables };
+    return { name, params, returns, body: node.body, patterns, cfg, unreachableNodes, hasInfiniteLoop, unusedVariables, undeclaredVariables };
 }

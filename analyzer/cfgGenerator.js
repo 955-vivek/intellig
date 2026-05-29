@@ -61,36 +61,71 @@ export function findUnusedVariablesCFG(functionNode, cfg) {
     // 3. Unused = declared but not used
     return Array.from(declared).filter(name => !used.has(name));
 }
+
+export function findUndeclaredVariables(functionNode) {
+    const declared = new Set();
+    if (functionNode.id && functionNode.id.name) declared.add(functionNode.id.name);
+    if (functionNode.params) {
+        functionNode.params.forEach(p => { if (p.type === 'Identifier') declared.add(p.name); });
+    }
+    function collectDeclarations(node) {
+        if (!node || typeof node !== 'object') return;
+        if (node.type === "VariableDeclarator" && node.id && node.id.name) declared.add(node.id.name);
+        for (const key in node) {
+            if (node.hasOwnProperty(key)) {
+                const child = node[key];
+                if (Array.isArray(child)) child.forEach(collectDeclarations);
+                else if (typeof child === 'object' && child !== null) collectDeclarations(child);
+            }
+        }
+    }
+    collectDeclarations(functionNode.body);
+
+    const used = new Set();
+    function collectUsages(node, parent = null) {
+        if (!node || typeof node !== 'object') return;
+        if (
+            node.type === "Identifier" &&
+            node.name &&
+            !(parent && parent.type === "VariableDeclarator" && parent.id === node) &&
+            !(parent && parent.type === "MemberExpression" && parent.property === node && !parent.computed) &&
+            !(parent && parent.type === "Property" && parent.key === node && !parent.computed)
+        ) {
+            used.add(node.name);
+        }
+        for (const key in node) {
+            if (node.hasOwnProperty(key)) {
+                const child = node[key];
+                if (Array.isArray(child)) child.forEach(c => collectUsages(c, node));
+                else if (typeof child === 'object' && child !== null) collectUsages(child, node);
+            }
+        }
+    }
+    collectUsages(functionNode.body, null);
+
+    const globals = new Set(['console', 'Math', 'window', 'document', 'process', 'require', 'exports', 'module', 'global', 'parseInt', 'parseFloat', 'isNaN']);
+    return Array.from(used).filter(name => !declared.has(name) && !globals.has(name));
+}
+
 export function detectInfiniteLoops(cfg) {
     if (!cfg.nodes.length) return false;
 
     // Only flag obvious infinite loops
     for (const node of cfg.nodes) {
-        // while (true)
-        if (node.type === "WhileStatement") {
-            if (
-                node.astNode &&
-                node.astNode.test &&
-                node.astNode.test.type === "Literal" &&
-                node.astNode.test.value === true
-            ) {
+        // while (true) or do {} while (true)
+        if (node.type === "WhileStatement" || node.type === "DoWhileStatement") {
+            // Note: generateCFG attaches stmt.test as the astNode for these loops
+            let testNode = node.astNode;
+            if (testNode && testNode.type === node.type) {
+                testNode = testNode.test; // Fallback if full stmt was attached
+            }
+            if (testNode && testNode.type === "Literal" && testNode.value === true) {
                 return true;
             }
         }
         // for(;;)
         if (node.type === "ForStatement") {
             if (node.astNode && node.astNode.test == null) {
-                return true;
-            }
-        }
-        // do {} while (true)
-        if (node.type === "DoWhileStatement") {
-            if (
-                node.astNode &&
-                node.astNode.test &&
-                node.astNode.test.type === "Literal" &&
-                node.astNode.test.value === true
-            ) {
                 return true;
             }
         }
@@ -178,7 +213,11 @@ export function generateCFG(functionNode) {
         let currentEnds = incomingEnds;
 
         for (const stmt of statements) {
-            if (currentEnds.length === 0) break; // unreachable block
+            if (currentEnds.length === 0) {
+                // Add node to graph, but don't connect it to anything!
+                addNode(generateCodeFromNode(stmt) || stmt.type, "Unreachable", stmt);
+                continue; // Move to the next statement
+            }
 
             if (stmt.type === "VariableDeclaration" || stmt.type === "ExpressionStatement") {
                 const recNode = checkCallRecursive(stmt);

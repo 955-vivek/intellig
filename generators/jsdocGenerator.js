@@ -1,5 +1,5 @@
 function generateJSDoc(funcMeta) {
-    const { name, params, returns, patterns, unreachableNodes, hasInfiniteLoop, unusedVariables } = funcMeta;
+    const { name, params, returns, patterns, unreachableNodes, hasInfiniteLoop, unusedVariables, undeclaredVariables } = funcMeta;
 
     let descriptionLines = [];
     if (patterns.recursion && patterns.recursion.isRecursive) {
@@ -60,6 +60,14 @@ function generateJSDoc(funcMeta) {
         ]
         : [];
 
+    const undeclaredVarTag = (undeclaredVariables && undeclaredVariables.length)
+        ? [
+            ' *',
+            ' * @warning Undeclared variable(s) detected (Reference Error):',
+            ...undeclaredVariables.map(varName => ` *   - ${varName}`)
+        ]
+        : [];
+
     return [
         '/**',
         description,
@@ -69,6 +77,7 @@ function generateJSDoc(funcMeta) {
         ...unreachableTag,
         ...infiniteLoopTag,
         ...unusedVarTag,
+        ...undeclaredVarTag,
         ' */'
     ].join('\n');
 }

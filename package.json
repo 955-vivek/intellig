@@ -11,6 +11,10 @@
   "categories": [
     "Other"
   ],
+  "activationEvents": [
+    "onCommand:intellicomment-engine.analyzeFile",
+    "onCommand:intellicomment-engine.showCFG"
+  ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
@@ -26,12 +30,12 @@
     "keybindings": [
       {
         "command": "intellicomment-engine.analyzeFile",
-        "key": "ctrl+alt+d",
+        "key": "alt+shift+d",
         "when": "editorTextFocus && editorLangId == javascript"
       },
       {
         "command": "intellicomment-engine.showCFG",
-        "key": "ctrl+alt+g",
+        "key": "alt+shift+g",
         "when": "editorTextFocus && editorLangId == javascript"
       }
     ]

@@ -52,7 +52,13 @@ function activate(context) {
         }
 
         // Run your analysis
-        const functions = extractFunctions(code);
+        let functions;
+        try {
+            functions = extractFunctions(code);
+        } catch (error) {
+            vscode.window.showErrorMessage("Syntax Error detected! Please fix your code before generating JSDoc. Details: " + error.message);
+            return;
+        }
 
         // Find all functions overlapping with the selection
         const selStart = editor.document.offsetAt(selection.start);
@@ -105,7 +111,13 @@ function activate(context) {
             return;
         }
 
-        const functions = extractFunctions(code);
+        let functions;
+        try {
+            functions = extractFunctions(code);
+        } catch (error) {
+            vscode.window.showErrorMessage("Syntax Error detected! Please fix your code before visualizing CFG. Details: " + error.message);
+            return;
+        }
         const selStart = editor.document.offsetAt(selection.start);
         const selEnd = editor.document.offsetAt(selection.end);
         // Find all functions overlapping with the selection
